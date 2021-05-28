@@ -1,0 +1,1712 @@
+---
+title: "specindex"
+author: "TZHH"
+date: "07/05/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+#TCC GUILHERME
+
+```{r}
+library(prospectr)
+library(corrgram)
+library(ggplot2)
+library(lattice)
+
+
+#install.packages("dplyr")
+library(dplyr)
+library(magrittr)
+library(lattice)
+library(latticeExtra)
+library(glue)
+library(ggplot2)
+library(reshape2) #heatmap
+library(caret) #partition
+library(grid)
+library(gridExtra)
+
+
+pkg <- c("rgdal", "raster", "dplyr", "caret", "doParallel", "janitor", "gtools", 
+         "hydroGOF", "Cubist", "randomForest", "e1071", "ggplot2", "PMCMR", 
+         "rcompanion", "multcompView", "tmap", "tmaptools", "tidyr", "geobr",
+         "sf", "fasterize", "beepr", "gbm", "earth", "kernlab", "stringr")
+sapply(pkg, require, character.only = T)
+
+```
+
+
+```{r}
+data <- read.csv("SSL.csv", sep = ",")
+
+id <- data[,1]
+soc <- data[,c(19:21)] #17 DC, 18 WCT, 19 WCC
+clay <- data[,c(23:25)]
+soil <- cbind(soc[1], clay[1])
+
+RAW <- data[,c(26:length(data))]
+```
+
+
+#Spectra index
+
+Predictor variables using data on `spectra` according to the literature (https://docs.google.com/spreadsheets/d/1K9bVN9NI4IQNVyPyyonqCbmGQQYSgz6lyvNR2We-bno/edit?usp=sharing)
+
+
+The spectral processing is indicated by the letter
+* X = raw
+* S = Smoothing
+* G = Savitzky Golay
+
+```{r pre proc}
+SMO <- prospectr::movav(RAW, w = 9) # w = tamanho da janela (número de bandas)
+
+SGD <- prospectr::savitzkyGolay(RAW, p = 1, w = 11, m = 1)  # p = ordem do polinomio; w = tamanho da janela; m = ordem da derivada
+
+colnames(SMO) = gsub("X", "S", colnames(SMO))
+colnames(SGD) = gsub("X", "G", colnames(SGD))
+
+spectra <- cbind(RAW, SMO, SGD)
+
+dataindex <- as.data.frame(soil)
+```
+
+
+## Spectra index
+
+```{r satelit index}
+#RAW
+#Landsat8 
+
+RAWLb1 <- paste0("X", 430:450)
+dataindex$RAWLb1 <- rowMeans(spectra[RAWLb1], na.rm = TRUE)
+
+RAWLb2 <- paste0("X", 450:510)
+dataindex$RAWLb2 <- rowMeans(spectra[RAWLb2], na.rm = TRUE)
+
+RAWLb3 <- paste0("X", 530:590)
+dataindex$RAWLb3 <- rowMeans(spectra[RAWLb3], na.rm = TRUE)
+
+RAWLb4 <- paste0("X", 640:690)
+dataindex$RAWLb4 <- rowMeans(spectra[RAWLb4], na.rm = TRUE)
+
+RAWLb5 <- paste0("X", 850:880)
+dataindex$RAWLb5 <- rowMeans(spectra[RAWLb5], na.rm = TRUE)
+
+RAWLb6 <- paste0("X", 1570:1650)
+dataindex$RAWLb6 <- rowMeans(spectra[RAWLb6], na.rm = TRUE)
+
+RAWLb7 <- paste0("X", 2110:2290)
+dataindex$RAWLb7 <- rowMeans(spectra[RAWLb7], na.rm = TRUE)
+
+
+#Sentinel2
+
+RAWSb1 <- paste0("X", 443)
+dataindex$RAWSb1 <- rowMeans(spectra[RAWSb1], na.rm = TRUE)
+
+RAWSb2 <- paste0("X", 490)
+dataindex$RAWSb2 <- rowMeans(spectra[RAWSb2], na.rm = TRUE)
+
+RAWSb3 <- paste0("X", 560)
+dataindex$RAWSb3 <- rowMeans(spectra[RAWSb3], na.rm = TRUE)
+
+RAWSb4 <- paste0("X", 665)
+dataindex$RAWSb4 <- rowMeans(spectra[RAWSb4], na.rm = TRUE)
+
+RAWSb5 <- paste0("X", 705)
+dataindex$RAWSb5 <- rowMeans(spectra[RAWSb5], na.rm = TRUE)
+
+RAWSb6 <- paste0("X", 740)
+dataindex$RAWSb6 <- rowMeans(spectra[RAWSb6], na.rm = TRUE)
+
+RAWSb7 <- paste0("X", 783)
+dataindex$RAWSb7 <- rowMeans(spectra[RAWSb7], na.rm = TRUE)
+
+RAWSb8 <- paste0("X", 842)
+dataindex$RAWSb8 <- rowMeans(spectra[RAWSb8], na.rm = TRUE)
+
+RAWSb9 <- paste0("X", 945)
+dataindex$RAWSb9 <- rowMeans(spectra[RAWSb9], na.rm = TRUE)
+
+RAWSb10 <- paste0("X", 1375)
+dataindex$RAWSb10 <- rowMeans(spectra[RAWSb10], na.rm = TRUE)
+
+RAWSb11 <- paste0("X", 1610)
+dataindex$RAWSb11 <- rowMeans(spectra[RAWSb11], na.rm = TRUE)
+
+RAWSb12 <- paste0("X", 2190)
+dataindex$RAWSb12 <- rowMeans(spectra[RAWSb12], na.rm = TRUE)
+
+
+#Word view
+
+RAWWb1 <- paste0("X", 510:580)
+dataindex$RAWWb1 <- rowMeans(spectra[RAWWb1], na.rm = TRUE)
+
+RAWWb2 <- paste0("X", 585:625)
+dataindex$RAWWb2 <- rowMeans(spectra[RAWWb2], na.rm = TRUE)
+
+RAWWb3 <- paste0("X", 630:690)
+dataindex$RAWWb3 <- rowMeans(spectra[RAWWb3], na.rm = TRUE)
+
+RAWWb4 <- paste0("X", 705:745)
+dataindex$RAWWb4 <- rowMeans(spectra[RAWWb4], na.rm = TRUE)
+
+RAWWb5 <- paste0("X", 770:895)
+dataindex$RAWWb5 <- rowMeans(spectra[RAWWb5], na.rm = TRUE)
+
+RAWWb6 <- paste0("X", 860:1040)
+dataindex$RAWWb6 <- rowMeans(spectra[RAWWb6], na.rm = TRUE)
+
+RAWWb7 <- paste0("X", 1195:1225)
+dataindex$RAWWb7 <- rowMeans(spectra[RAWWb7], na.rm = TRUE)
+
+RAWWb8 <- paste0("X", 1550:1590)
+dataindex$RAWWb8 <- rowMeans(spectra[RAWWb8], na.rm = TRUE)
+
+RAWWb9 <- paste0("X", 1640:1680)
+dataindex$RAWWb9 <- rowMeans(spectra[RAWWb9], na.rm = TRUE)
+
+RAWWb10 <- paste0("X", 1640:1680)
+dataindex$RAWWb10 <- rowMeans(spectra[RAWWb10], na.rm = TRUE)
+
+RAWWb11 <- paste0("X", 1710:1750)
+dataindex$RAWWb11 <- rowMeans(spectra[RAWWb11], na.rm = TRUE)
+
+RAWWb12 <- paste0("X", 2145:2185)
+dataindex$RAWWb12 <- rowMeans(spectra[RAWWb12], na.rm = TRUE)
+
+RAWWb13 <- paste0("X", 2185:2225)
+dataindex$RAWWb13 <- rowMeans(spectra[RAWWb13], na.rm = TRUE)
+
+RAWWb14 <- paste0("X", 2235:2285)
+dataindex$RAWWb14 <- rowMeans(spectra[RAWWb14], na.rm = TRUE)
+
+##SMO
+#Landsat8 
+
+SMOLb1 <- paste0("S", 430:450)
+dataindex$SMOLb1 <- rowMeans(spectra[SMOLb1], na.rm = TRUE)
+
+SMOLb2 <- paste0("S", 450:510)
+dataindex$SMOLb2 <- rowMeans(spectra[SMOLb2], na.rm = TRUE)
+
+SMOLb3 <- paste0("S", 530:590)
+dataindex$SMOLb3 <- rowMeans(spectra[SMOLb3], na.rm = TRUE)
+
+SMOLb4 <- paste0("S", 640:690)
+dataindex$SMOLb4 <- rowMeans(spectra[SMOLb4], na.rm = TRUE)
+
+SMOLb5 <- paste0("S", 850:880)
+dataindex$SMOLb5 <- rowMeans(spectra[SMOLb5], na.rm = TRUE)
+
+SMOLb6 <- paste0("S", 1570:1650)
+dataindex$SMOLb6 <- rowMeans(spectra[SMOLb6], na.rm = TRUE)
+
+SMOLb7 <- paste0("S", 2110:2290)
+dataindex$SMOLb7 <- rowMeans(spectra[SMOLb7], na.rm = TRUE)
+
+
+#Sentinel2
+
+SMOSb1 <- paste0("S", 443)
+dataindex$SMOSb1 <- rowMeans(spectra[SMOSb1], na.rm = TRUE)
+
+SMOSb2 <- paste0("S", 490)
+dataindex$SMOSb2 <- rowMeans(spectra[SMOSb2], na.rm = TRUE)
+
+SMOSb3 <- paste0("S", 560)
+dataindex$SMOSb3 <- rowMeans(spectra[SMOSb3], na.rm = TRUE)
+
+SMOSb4 <- paste0("S", 665)
+dataindex$SMOSb4 <- rowMeans(spectra[SMOSb4], na.rm = TRUE)
+
+SMOSb5 <- paste0("S", 705)
+dataindex$SMOSb5 <- rowMeans(spectra[SMOSb5], na.rm = TRUE)
+
+SMOSb6 <- paste0("S", 740)
+dataindex$SMOSb6 <- rowMeans(spectra[SMOSb6], na.rm = TRUE)
+
+SMOSb7 <- paste0("S", 783)
+dataindex$SMOSb7 <- rowMeans(spectra[SMOSb7], na.rm = TRUE)
+
+SMOSb8 <- paste0("S", 842)
+dataindex$SMOSb8 <- rowMeans(spectra[SMOSb8], na.rm = TRUE)
+
+SMOSb9 <- paste0("S", 945)
+dataindex$SMOSb9 <- rowMeans(spectra[SMOSb9], na.rm = TRUE)
+
+SMOSb10 <- paste0("S", 1375)
+dataindex$SMOSb10 <- rowMeans(spectra[SMOSb10], na.rm = TRUE)
+
+SMOSb11 <- paste0("S", 1610)
+dataindex$SMOSb11 <- rowMeans(spectra[SMOSb11], na.rm = TRUE)
+
+SMOSb12 <- paste0("S", 2190)
+dataindex$SMOSb12 <- rowMeans(spectra[SMOSb12], na.rm = TRUE)
+
+
+#Word view
+
+SMOWb1 <- paste0("S", 510:580)
+dataindex$SMOWb1 <- rowMeans(spectra[SMOWb1], na.rm = TRUE)
+
+SMOWb2 <- paste0("S", 585:625)
+dataindex$SMOWb2 <- rowMeans(spectra[SMOWb2], na.rm = TRUE)
+
+SMOWb3 <- paste0("S", 630:690)
+dataindex$SMOWb3 <- rowMeans(spectra[SMOWb3], na.rm = TRUE)
+
+SMOWb4 <- paste0("S", 705:745)
+dataindex$SMOWb4 <- rowMeans(spectra[SMOWb4], na.rm = TRUE)
+
+SMOWb5 <- paste0("S", 770:895)
+dataindex$SMOWb5 <- rowMeans(spectra[SMOWb5], na.rm = TRUE)
+
+SMOWb6 <- paste0("S", 860:1040)
+dataindex$SMOWb6 <- rowMeans(spectra[SMOWb6], na.rm = TRUE)
+
+SMOWb7 <- paste0("S", 1195:1225)
+dataindex$SMOWb7 <- rowMeans(spectra[SMOWb7], na.rm = TRUE)
+
+SMOWb8 <- paste0("S", 1550:1590)
+dataindex$SMOWb8 <- rowMeans(spectra[SMOWb8], na.rm = TRUE)
+
+SMOWb9 <- paste0("S", 1640:1680)
+dataindex$SMOWb9 <- rowMeans(spectra[SMOWb9], na.rm = TRUE)
+
+SMOWb10 <- paste0("S", 1640:1680)
+dataindex$SMOWb10 <- rowMeans(spectra[SMOWb10], na.rm = TRUE)
+
+SMOWb11 <- paste0("S", 1710:1750)
+dataindex$SMOWb11 <- rowMeans(spectra[SMOWb11], na.rm = TRUE)
+
+SMOWb12 <- paste0("S", 2145:2185)
+dataindex$SMOWb12 <- rowMeans(spectra[SMOWb12], na.rm = TRUE)
+
+SMOWb13 <- paste0("S", 2185:2225)
+dataindex$SMOWb13 <- rowMeans(spectra[SMOWb13], na.rm = TRUE)
+
+SMOWb14 <- paste0("S", 2235:2285)
+dataindex$SMOWb14 <- rowMeans(spectra[SMOWb14], na.rm = TRUE)
+
+
+##### SGD
+
+SGDLb1 <- paste0("G", 430:450)
+dataindex$SGDLb1 <- rowMeans(spectra[SGDLb1], na.rm = TRUE)
+
+SGDLb2 <- paste0("G", 450:510)
+dataindex$SGDLb2 <- rowMeans(spectra[SGDLb2], na.rm = TRUE)
+
+SGDLb3 <- paste0("G", 530:590)
+dataindex$SGDLb3 <- rowMeans(spectra[SGDLb3], na.rm = TRUE)
+
+SGDLb4 <- paste0("G", 640:690)
+dataindex$SGDLb4 <- rowMeans(spectra[SGDLb4], na.rm = TRUE)
+
+SGDLb5 <- paste0("G", 850:880)
+dataindex$SGDLb5 <- rowMeans(spectra[SGDLb5], na.rm = TRUE)
+
+SGDLb6 <- paste0("G", 1570:1650)
+dataindex$SGDLb6 <- rowMeans(spectra[SGDLb6], na.rm = TRUE)
+
+SGDLb7 <- paste0("G", 2110:2290)
+dataindex$SGDLb7 <- rowMeans(spectra[SGDLb7], na.rm = TRUE)
+
+
+#Sentinel2
+
+SGDSb1 <- paste0("G", 443)
+dataindex$SGDSb1 <- rowMeans(spectra[SGDSb1], na.rm = TRUE)
+
+SGDSb2 <- paste0("G", 490)
+dataindex$SGDSb2 <- rowMeans(spectra[SGDSb2], na.rm = TRUE)
+
+SGDSb3 <- paste0("G", 560)
+dataindex$SGDSb3 <- rowMeans(spectra[SGDSb3], na.rm = TRUE)
+
+SGDSb4 <- paste0("G", 665)
+dataindex$SGDSb4 <- rowMeans(spectra[SGDSb4], na.rm = TRUE)
+
+SGDSb5 <- paste0("G", 705)
+dataindex$SGDSb5 <- rowMeans(spectra[SGDSb5], na.rm = TRUE)
+
+SGDSb6 <- paste0("G", 740)
+dataindex$SGDSb6 <- rowMeans(spectra[SGDSb6], na.rm = TRUE)
+
+SGDSb7 <- paste0("G", 783)
+dataindex$SGDSb7 <- rowMeans(spectra[SGDSb7], na.rm = TRUE)
+
+SGDSb8 <- paste0("G", 842)
+dataindex$SGDSb8 <- rowMeans(spectra[SGDSb8], na.rm = TRUE)
+
+SGDSb9 <- paste0("G", 945)
+dataindex$SGDSb9 <- rowMeans(spectra[SGDSb9], na.rm = TRUE)
+
+SGDSb10 <- paste0("G", 1375)
+dataindex$SGDSb10 <- rowMeans(spectra[SGDSb10], na.rm = TRUE)
+
+SGDSb11 <- paste0("G", 1610)
+dataindex$SGDSb11 <- rowMeans(spectra[SGDSb11], na.rm = TRUE)
+
+SGDSb12 <- paste0("G", 2190)
+dataindex$SGDSb12 <- rowMeans(spectra[SGDSb12], na.rm = TRUE)
+
+
+#Word view
+
+SGDWb1 <- paste0("G", 510:580)
+dataindex$SGDWb1 <- rowMeans(spectra[SGDWb1], na.rm = TRUE)
+
+SGDWb2 <- paste0("G", 585:625)
+dataindex$SGDWb2 <- rowMeans(spectra[SGDWb2], na.rm = TRUE)
+
+SGDWb3 <- paste0("G", 630:690)
+dataindex$SGDWb3 <- rowMeans(spectra[SGDWb3], na.rm = TRUE)
+
+SGDWb4 <- paste0("G", 705:745)
+dataindex$SGDWb4 <- rowMeans(spectra[SGDWb4], na.rm = TRUE)
+
+SGDWb5 <- paste0("G", 770:895)
+dataindex$SGDWb5 <- rowMeans(spectra[SGDWb5], na.rm = TRUE)
+
+SGDWb6 <- paste0("G", 860:1040)
+dataindex$SGDWb6 <- rowMeans(spectra[SGDWb6], na.rm = TRUE)
+
+SGDWb7 <- paste0("G", 1195:1225)
+dataindex$SGDWb7 <- rowMeans(spectra[SGDWb7], na.rm = TRUE)
+
+SGDWb8 <- paste0("G", 1550:1590)
+dataindex$SGDWb8 <- rowMeans(spectra[SGDWb8], na.rm = TRUE)
+
+SGDWb9 <- paste0("G", 1640:1680)
+dataindex$SGDWb9 <- rowMeans(spectra[SGDWb9], na.rm = TRUE)
+
+SGDWb10 <- paste0("G", 1640:1680)
+dataindex$SGDWb10 <- rowMeans(spectra[SGDWb10], na.rm = TRUE)
+
+SGDWb11 <- paste0("G", 1710:1750)
+dataindex$SGDWb11 <- rowMeans(spectra[SGDWb11], na.rm = TRUE)
+
+SGDWb12 <- paste0("G", 2145:2185)
+dataindex$SGDWb12 <- rowMeans(spectra[SGDWb12], na.rm = TRUE)
+
+SGDWb13 <- paste0("G", 2185:2225)
+dataindex$SGDWb13 <- rowMeans(spectra[SGDWb13], na.rm = TRUE)
+
+SGDWb14 <- paste0("G", 2235:2285)
+dataindex$SGDWb14 <- rowMeans(spectra[SGDWb14], na.rm = TRUE)
+
+####
+##Index soil
+## Viscarra Rossel e Brehemer 2006 + desvio de 10 nm
+
+##oxidefe
+RAWfe1 <- paste0("X", 424:444)
+dataindex$RAWfe1a <- rowMeans(spectra[RAWfe1], na.rm = TRUE)
+dataindex$RAWfe1s <- rowSums(spectra[RAWfe1], na.rm = TRUE)
+
+RAWfe2 <- paste0("X", 470:490)
+dataindex$RAWfe2a <- rowMeans(spectra[RAWfe2], na.rm = TRUE)
+dataindex$RAWfe2s <- rowSums(spectra[RAWfe2], na.rm = TRUE)
+
+RAWfe3 <- paste0("X", 910:930)
+dataindex$RAWfe3a <- rowMeans(spectra[RAWfe3], na.rm = TRUE)
+dataindex$RAWfe3s <- rowSums(spectra[RAWfe3], na.rm = TRUE)
+
+RAWfe4 <- paste0("X", 394:414)
+dataindex$RAWfe4a <- rowMeans(spectra[RAWfe4], na.rm = TRUE)
+dataindex$RAWfe4s <- rowSums(spectra[RAWfe4], na.rm = TRUE)
+
+RAWfe5 <- paste0("X", 434:454)
+dataindex$RAWfe5a <- rowMeans(spectra[RAWfe5], na.rm = TRUE)
+dataindex$RAWfe5s <- rowSums(spectra[RAWfe5], na.rm = TRUE)
+
+RAWfe6 <- paste0("X", 424:444)
+dataindex$RAWfe6a <- rowMeans(spectra[RAWfe6], na.rm = TRUE)
+dataindex$RAWfe6s <- rowSums(spectra[RAWfe6], na.rm = TRUE)
+
+RAWfe7 <- paste0("X", 519:539)
+dataindex$RAWfe7a <- rowMeans(spectra[RAWfe7], na.rm = TRUE)
+dataindex$RAWfe7s <- rowSums(spectra[RAWfe7], na.rm = TRUE)
+
+RAWfe8 <- paste0("X", 640:660)
+dataindex$RAWfe8a <- rowMeans(spectra[RAWfe8], na.rm = TRUE)
+dataindex$RAWfe8s <- rowSums(spectra[RAWfe8], na.rm = TRUE)
+
+RAWfe9 <- paste0("X", 874:894)
+dataindex$RAWfe9a <- rowMeans(spectra[RAWfe9], na.rm = TRUE)
+dataindex$RAWfe9s <- rowSums(spectra[RAWfe9], na.rm = TRUE)
+
+#organic
+
+RAWorg1 <- paste0("X", 1640:1660)
+dataindex$RAWorg1a <- rowMeans(spectra[RAWorg1], na.rm = TRUE)
+dataindex$RAWorg1s <- rowSums(spectra[RAWorg1], na.rm = TRUE)
+
+RAWorg2 <- paste0("X", 1090:1110)
+dataindex$RAWorg2a <- rowMeans(spectra[RAWorg2], na.rm = TRUE)
+dataindex$RAWorg2s <- rowSums(spectra[RAWorg2], na.rm = TRUE)
+
+RAWorg3 <- paste0("X", 815:835)
+dataindex$RAWorg3a <- rowMeans(spectra[RAWorg3], na.rm = TRUE)
+dataindex$RAWorg3s <- rowSums(spectra[RAWorg3], na.rm = TRUE)
+
+RAWorg4 <- paste0("X", 2050:2070)
+dataindex$RAWorg4a <- rowMeans(spectra[RAWorg4], na.rm = TRUE)
+dataindex$RAWorg4s <- rowSums(spectra[RAWorg4], na.rm = TRUE)
+
+RAWorg5 <- paste0("X", 1490:1510)
+dataindex$RAWorg5a <- rowMeans(spectra[RAWorg5], na.rm = TRUE)
+dataindex$RAWorg5s <- rowSums(spectra[RAWorg5], na.rm = TRUE)
+
+RAWorg6 <- paste0("X", 990:1010)
+dataindex$RAWorg6a <- rowMeans(spectra[RAWorg6], na.rm = TRUE)
+dataindex$RAWorg6s <- rowSums(spectra[RAWorg6], na.rm = TRUE)
+
+RAWorg7 <- paste0("X", 741:761)
+dataindex$RAWorg7a <- rowMeans(spectra[RAWorg7], na.rm = TRUE)
+dataindex$RAWorg7s <- rowSums(spectra[RAWorg7], na.rm = TRUE)
+
+RAWorg8 <- paste0("X", 1696:1716)
+dataindex$RAWorg8a <- rowMeans(spectra[RAWorg8], na.rm = TRUE)
+dataindex$RAWorg8s <- rowSums(spectra[RAWorg8], na.rm = TRUE)
+
+RAWorg9 <- paste0("X", 1744:1764)
+dataindex$RAWorg9a <- rowMeans(spectra[RAWorg9], na.rm = TRUE)
+dataindex$RAWorg9s <- rowSums(spectra[RAWorg9], na.rm = TRUE)
+
+RAWorg10 <- paste0("X", 1128:1148)
+dataindex$RAWorg10a <- rowMeans(spectra[RAWorg10], na.rm = TRUE)
+dataindex$RAWorg10s <- rowSums(spectra[RAWorg10], na.rm = TRUE)
+
+RAWorg11 <- paste0("X", 1160:1180)
+dataindex$RAWorg11a <- rowMeans(spectra[RAWorg11], na.rm = TRUE)
+dataindex$RAWorg11s <- rowSums(spectra[RAWorg11], na.rm = TRUE)
+
+RAWorg12 <- paste0("X", 843:863)
+dataindex$RAWorg12a <- rowMeans(spectra[RAWorg12], na.rm = TRUE)
+dataindex$RAWorg12s <- rowSums(spectra[RAWorg12], na.rm = TRUE)
+
+RAWorg13 <- paste0("X", 867:887)
+dataindex$RAWorg13a <- rowMeans(spectra[RAWorg13], na.rm = TRUE)
+dataindex$RAWorg13s <- rowSums(spectra[RAWorg13], na.rm = TRUE)
+
+RAWorg14 <- paste0("X", 1920:1940)
+dataindex$RAWorg14a <- rowMeans(spectra[RAWorg14], na.rm = TRUE)
+dataindex$RAWorg14s <- rowSums(spectra[RAWorg14], na.rm = TRUE)
+
+RAWorg15 <- paste0("X", 1439:1459)
+dataindex$RAWorg15a <- rowMeans(spectra[RAWorg15], na.rm = TRUE)
+dataindex$RAWorg15s <- rowSums(spectra[RAWorg15], na.rm = TRUE)
+
+RAWorg16 <- paste0("X", 2023:2043)
+dataindex$RAWorg16a <- rowMeans(spectra[RAWorg16], na.rm = TRUE)
+dataindex$RAWorg16s <- rowSums(spectra[RAWorg16], na.rm = TRUE)
+
+RAWorg17 <- paste0("X", 1514:1534)
+dataindex$RAWorg17a <- rowMeans(spectra[RAWorg17], na.rm = TRUE)
+dataindex$RAWorg17s <- rowSums(spectra[RAWorg17], na.rm = TRUE)
+
+RAWorg18 <- paste0("X", 2265:2285)
+dataindex$RAWorg18a <- rowMeans(spectra[RAWorg18], na.rm = TRUE)
+dataindex$RAWorg18s <- rowSums(spectra[RAWorg18], na.rm = TRUE)
+
+RAWorg19 <- paste0("X", 1696:1716)
+dataindex$RAWorg19a <- rowMeans(spectra[RAWorg19], na.rm = TRUE)
+dataindex$RAWorg19s <- rowSums(spectra[RAWorg19], na.rm = TRUE)
+
+RAWorg20 <- paste0("X", 2297:2317)
+dataindex$RAWorg20a <- rowMeans(spectra[RAWorg20], na.rm = TRUE)
+dataindex$RAWorg20s <- rowSums(spectra[RAWorg20], na.rm = TRUE)
+
+RAWorg21 <- paste0("X", 1720:1740)
+dataindex$RAWorg21a <- rowMeans(spectra[RAWorg21], na.rm = TRUE)
+dataindex$RAWorg21s <- rowSums(spectra[RAWorg21], na.rm = TRUE)
+
+RAWorg22 <- paste0("X", 1951:1971)
+dataindex$RAWorg22a <- rowMeans(spectra[RAWorg22], na.rm = TRUE)
+dataindex$RAWorg22s <- rowSums(spectra[RAWorg22], na.rm = TRUE)
+
+RAWorg23 <- paste0("X", 2127:2147)
+dataindex$RAWorg23a <- rowMeans(spectra[RAWorg23], na.rm = TRUE)
+dataindex$RAWorg23s <- rowSums(spectra[RAWorg23], na.rm = TRUE)
+
+RAWorg24 <- paste0("X", 2371:2391)
+dataindex$RAWorg24a <- rowMeans(spectra[RAWorg24], na.rm = TRUE)
+dataindex$RAWorg24s <- rowSums(spectra[RAWorg24], na.rm = TRUE)
+
+#clay
+
+RAWclay1 <- paste0("X", 1385:1405)
+dataindex$RAWclay1a <- rowMeans(spectra[RAWclay1], na.rm = TRUE)
+dataindex$RAWclay1s <- rowSums(spectra[RAWclay1], na.rm = TRUE)
+
+RAWclay2 <- paste0("X", 1405:1425)
+dataindex$RAWclay2a <- rowMeans(spectra[RAWclay2], na.rm = TRUE)
+dataindex$RAWclay2s <- rowSums(spectra[RAWclay2], na.rm = TRUE)
+
+RAWclay3 <- paste0("X", 2150:2170)
+dataindex$RAWclay3a <- rowMeans(spectra[RAWclay3], na.rm = TRUE)
+dataindex$RAWclay3s <- rowSums(spectra[RAWclay3], na.rm = TRUE)
+
+RAWclay4 <- paste0("X", 2050:2070)
+dataindex$RAWclay4a <- rowMeans(spectra[RAWclay4], na.rm = TRUE)
+dataindex$RAWclay4s <- rowSums(spectra[RAWclay4], na.rm = TRUE)
+
+RAWclay5 <- paste0("X", 2198:2218)
+dataindex$RAWclay5a <- rowMeans(spectra[RAWclay5], na.rm = TRUE)
+dataindex$RAWclay5s <- rowSums(spectra[RAWclay5], na.rm = TRUE)
+
+RAWclay6 <- paste0("X", 2196:2216)
+dataindex$RAWclay6a <- rowMeans(spectra[RAWclay6], na.rm = TRUE)
+dataindex$RAWclay6s <- rowSums(spectra[RAWclay6], na.rm = TRUE)
+
+RAWclay7 <- paste0("X", 2220:2240)
+dataindex$RAWclay7a <- rowMeans(spectra[RAWclay7], na.rm = TRUE)
+dataindex$RAWclay7s <- rowSums(spectra[RAWclay7], na.rm = TRUE)
+
+RAWclay8 <- paste0("X", 2330:2350)
+dataindex$RAWclay8a <- rowMeans(spectra[RAWclay8], na.rm = TRUE)
+dataindex$RAWclay8s <- rowSums(spectra[RAWclay8], na.rm = TRUE)
+
+RAWclay9 <- paste0("X", 2440:2460)
+dataindex$RAWclay9a <- rowMeans(spectra[RAWclay9], na.rm = TRUE)
+dataindex$RAWclay9s <- rowSums(spectra[RAWclay9], na.rm = TRUE)
+
+RAWclay10 <- paste0("X", 2326:2346)
+dataindex$RAWclay10a <- rowMeans(spectra[RAWclay10], na.rm = TRUE)
+dataindex$RAWclay10s <- rowSums(spectra[RAWclay10], na.rm = TRUE)
+
+#############
+
+
+##oxidefe
+SMOfe1 <- paste0("S", 424:444)
+dataindex$SMOfe1a <- rowMeans(spectra[SMOfe1], na.rm = TRUE)
+dataindex$SMOfe1s <- rowSums(spectra[SMOfe1], na.rm = TRUE)
+
+SMOfe2 <- paste0("S", 470:490)
+dataindex$SMOfe2a <- rowMeans(spectra[SMOfe2], na.rm = TRUE)
+dataindex$SMOfe2s <- rowSums(spectra[SMOfe2], na.rm = TRUE)
+
+SMOfe3 <- paste0("S", 910:930)
+dataindex$SMOfe3a <- rowMeans(spectra[SMOfe3], na.rm = TRUE)
+dataindex$SMOfe3s <- rowSums(spectra[SMOfe3], na.rm = TRUE)
+
+SMOfe4 <- paste0("S", 394:414)
+dataindex$SMOfe4a <- rowMeans(spectra[SMOfe4], na.rm = TRUE)
+dataindex$SMOfe4s <- rowSums(spectra[SMOfe4], na.rm = TRUE)
+
+SMOfe5 <- paste0("S", 434:454)
+dataindex$SMOfe5a <- rowMeans(spectra[SMOfe5], na.rm = TRUE)
+dataindex$SMOfe5s <- rowSums(spectra[SMOfe5], na.rm = TRUE)
+
+SMOfe6 <- paste0("S", 424:444)
+dataindex$SMOfe6a <- rowMeans(spectra[SMOfe6], na.rm = TRUE)
+dataindex$SMOfe6s <- rowSums(spectra[SMOfe6], na.rm = TRUE)
+
+SMOfe7 <- paste0("S", 519:539)
+dataindex$SMOfe7a <- rowMeans(spectra[SMOfe7], na.rm = TRUE)
+dataindex$SMOfe7s <- rowSums(spectra[SMOfe7], na.rm = TRUE)
+
+SMOfe8 <- paste0("S", 640:660)
+dataindex$SMOfe8a <- rowMeans(spectra[SMOfe8], na.rm = TRUE)
+dataindex$SMOfe8s <- rowSums(spectra[SMOfe8], na.rm = TRUE)
+
+SMOfe9 <- paste0("S", 874:894)
+dataindex$SMOfe9a <- rowMeans(spectra[SMOfe9], na.rm = TRUE)
+dataindex$SMOfe9s <- rowSums(spectra[SMOfe9], na.rm = TRUE)
+
+#organic
+
+SMOorg1 <- paste0("S", 1640:1660)
+dataindex$SMOorg1a <- rowMeans(spectra[SMOorg1], na.rm = TRUE)
+dataindex$SMOorg1s <- rowSums(spectra[SMOorg1], na.rm = TRUE)
+
+SMOorg2 <- paste0("S", 1090:1110)
+dataindex$SMOorg2a <- rowMeans(spectra[SMOorg2], na.rm = TRUE)
+dataindex$SMOorg2s <- rowSums(spectra[SMOorg2], na.rm = TRUE)
+
+SMOorg3 <- paste0("S", 815:835)
+dataindex$SMOorg3a <- rowMeans(spectra[SMOorg3], na.rm = TRUE)
+dataindex$SMOorg3s <- rowSums(spectra[SMOorg3], na.rm = TRUE)
+
+SMOorg4 <- paste0("S", 2050:2070)
+dataindex$SMOorg4a <- rowMeans(spectra[SMOorg4], na.rm = TRUE)
+dataindex$SMOorg4s <- rowSums(spectra[SMOorg4], na.rm = TRUE)
+
+SMOorg5 <- paste0("S", 1490:1510)
+dataindex$SMOorg5a <- rowMeans(spectra[SMOorg5], na.rm = TRUE)
+dataindex$SMOorg5s <- rowSums(spectra[SMOorg5], na.rm = TRUE)
+
+SMOorg6 <- paste0("S", 990:1010)
+dataindex$SMOorg6a <- rowMeans(spectra[SMOorg6], na.rm = TRUE)
+dataindex$SMOorg6s <- rowSums(spectra[SMOorg6], na.rm = TRUE)
+
+SMOorg7 <- paste0("S", 741:761)
+dataindex$SMOorg7a <- rowMeans(spectra[SMOorg7], na.rm = TRUE)
+dataindex$SMOorg7s <- rowSums(spectra[SMOorg7], na.rm = TRUE)
+
+SMOorg8 <- paste0("S", 1696:1716)
+dataindex$SMOorg8a <- rowMeans(spectra[SMOorg8], na.rm = TRUE)
+dataindex$SMOorg8s <- rowSums(spectra[SMOorg8], na.rm = TRUE)
+
+SMOorg9 <- paste0("S", 1744:1764)
+dataindex$SMOorg9a <- rowMeans(spectra[SMOorg9], na.rm = TRUE)
+dataindex$SMOorg9s <- rowSums(spectra[SMOorg9], na.rm = TRUE)
+
+SMOorg10 <- paste0("S", 1128:1148)
+dataindex$SMOorg10a <- rowMeans(spectra[SMOorg10], na.rm = TRUE)
+dataindex$SMOorg10s <- rowSums(spectra[SMOorg10], na.rm = TRUE)
+
+SMOorg11 <- paste0("S", 1160:1180)
+dataindex$SMOorg11a <- rowMeans(spectra[SMOorg11], na.rm = TRUE)
+dataindex$SMOorg11s <- rowSums(spectra[SMOorg11], na.rm = TRUE)
+
+SMOorg12 <- paste0("S", 843:863)
+dataindex$SMOorg12a <- rowMeans(spectra[SMOorg12], na.rm = TRUE)
+dataindex$SMOorg12s <- rowSums(spectra[SMOorg12], na.rm = TRUE)
+
+SMOorg13 <- paste0("S", 867:887)
+dataindex$SMOorg13a <- rowMeans(spectra[SMOorg13], na.rm = TRUE)
+dataindex$SMOorg13s <- rowSums(spectra[SMOorg13], na.rm = TRUE)
+
+SMOorg14 <- paste0("S", 1920:1940)
+dataindex$SMOorg14a <- rowMeans(spectra[SMOorg14], na.rm = TRUE)
+dataindex$SMOorg14s <- rowSums(spectra[SMOorg14], na.rm = TRUE)
+
+SMOorg15 <- paste0("S", 1439:1459)
+dataindex$SMOorg15a <- rowMeans(spectra[SMOorg15], na.rm = TRUE)
+dataindex$SMOorg15s <- rowSums(spectra[SMOorg15], na.rm = TRUE)
+
+SMOorg16 <- paste0("S", 2023:2043)
+dataindex$SMOorg16a <- rowMeans(spectra[SMOorg16], na.rm = TRUE)
+dataindex$SMOorg16s <- rowSums(spectra[SMOorg16], na.rm = TRUE)
+
+SMOorg17 <- paste0("S", 1514:1534)
+dataindex$SMOorg17a <- rowMeans(spectra[SMOorg17], na.rm = TRUE)
+dataindex$SMOorg17s <- rowSums(spectra[SMOorg17], na.rm = TRUE)
+
+SMOorg18 <- paste0("S", 2265:2285)
+dataindex$SMOorg18a <- rowMeans(spectra[SMOorg18], na.rm = TRUE)
+dataindex$SMOorg18s <- rowSums(spectra[SMOorg18], na.rm = TRUE)
+
+SMOorg19 <- paste0("S", 1696:1716)
+dataindex$SMOorg19a <- rowMeans(spectra[SMOorg19], na.rm = TRUE)
+dataindex$SMOorg19s <- rowSums(spectra[SMOorg19], na.rm = TRUE)
+
+SMOorg20 <- paste0("S", 2297:2317)
+dataindex$SMOorg20a <- rowMeans(spectra[SMOorg20], na.rm = TRUE)
+dataindex$SMOorg20s <- rowSums(spectra[SMOorg20], na.rm = TRUE)
+
+SMOorg21 <- paste0("S", 1720:1740)
+dataindex$SMOorg21a <- rowMeans(spectra[SMOorg21], na.rm = TRUE)
+dataindex$SMOorg21s <- rowSums(spectra[SMOorg21], na.rm = TRUE)
+
+SMOorg22 <- paste0("S", 1951:1971)
+dataindex$SMOorg22a <- rowMeans(spectra[SMOorg22], na.rm = TRUE)
+dataindex$SMOorg22s <- rowSums(spectra[SMOorg22], na.rm = TRUE)
+
+SMOorg23 <- paste0("S", 2127:2147)
+dataindex$SMOorg23a <- rowMeans(spectra[SMOorg23], na.rm = TRUE)
+dataindex$SMOorg23s <- rowSums(spectra[SMOorg23], na.rm = TRUE)
+
+SMOorg24 <- paste0("S", 2371:2391)
+dataindex$SMOorg24a <- rowMeans(spectra[SMOorg24], na.rm = TRUE)
+dataindex$SMOorg24s <- rowSums(spectra[SMOorg24], na.rm = TRUE)
+
+#clay
+
+SMOclay1 <- paste0("S", 1385:1405)
+dataindex$SMOclay1a <- rowMeans(spectra[SMOclay1], na.rm = TRUE)
+dataindex$SMOclay1s <- rowSums(spectra[SMOclay1], na.rm = TRUE)
+
+SMOclay2 <- paste0("S", 1405:1425)
+dataindex$SMOclay2a <- rowMeans(spectra[SMOclay2], na.rm = TRUE)
+dataindex$SMOclay2s <- rowSums(spectra[SMOclay2], na.rm = TRUE)
+
+SMOclay3 <- paste0("S", 2150:2170)
+dataindex$SMOclay3a <- rowMeans(spectra[SMOclay3], na.rm = TRUE)
+dataindex$SMOclay3s <- rowSums(spectra[SMOclay3], na.rm = TRUE)
+
+SMOclay4 <- paste0("S", 2050:2070)
+dataindex$SMOclay4a <- rowMeans(spectra[SMOclay4], na.rm = TRUE)
+dataindex$SMOclay4s <- rowSums(spectra[SMOclay4], na.rm = TRUE)
+
+SMOclay5 <- paste0("S", 2198:2218)
+dataindex$SMOclay5a <- rowMeans(spectra[SMOclay5], na.rm = TRUE)
+dataindex$SMOclay5s <- rowSums(spectra[SMOclay5], na.rm = TRUE)
+
+SMOclay6 <- paste0("S", 2196:2216)
+dataindex$SMOclay6a <- rowMeans(spectra[SMOclay6], na.rm = TRUE)
+dataindex$SMOclay6s <- rowSums(spectra[SMOclay6], na.rm = TRUE)
+
+SMOclay7 <- paste0("S", 2220:2240)
+dataindex$SMOclay7a <- rowMeans(spectra[SMOclay7], na.rm = TRUE)
+dataindex$SMOclay7s <- rowSums(spectra[SMOclay7], na.rm = TRUE)
+
+SMOclay8 <- paste0("S", 2330:2350)
+dataindex$SMOclay8a <- rowMeans(spectra[SMOclay8], na.rm = TRUE)
+dataindex$SMOclay8s <- rowSums(spectra[SMOclay8], na.rm = TRUE)
+
+SMOclay9 <- paste0("S", 2440:2460)
+dataindex$SMOclay9a <- rowMeans(spectra[SMOclay9], na.rm = TRUE)
+dataindex$SMOclay9s <- rowSums(spectra[SMOclay9], na.rm = TRUE)
+
+SMOclay10 <- paste0("S", 2326:2346)
+dataindex$SMOclay10a <- rowMeans(spectra[SMOclay10], na.rm = TRUE)
+dataindex$SMOclay10s <- rowSums(spectra[SMOclay10], na.rm = TRUE)
+
+############################################################
+
+###################################################### SGD
+
+##oxidefe
+SGDfe1 <- paste0("G", 424:444)
+dataindex$SGDfe1a <- rowMeans(spectra[SGDfe1], na.rm = TRUE)
+dataindex$SGDfe1s <- rowSums(spectra[SGDfe1], na.rm = TRUE)
+
+SGDfe2 <- paste0("G", 470:490)
+dataindex$SGDfe2a <- rowMeans(spectra[SGDfe2], na.rm = TRUE)
+dataindex$SGDfe2s <- rowSums(spectra[SGDfe2], na.rm = TRUE)
+
+SGDfe3 <- paste0("G", 910:930)
+dataindex$SGDfe3a <- rowMeans(spectra[SGDfe3], na.rm = TRUE)
+dataindex$SGDfe3s <- rowSums(spectra[SGDfe3], na.rm = TRUE)
+
+SGDfe4 <- paste0("G", 394:414)
+dataindex$SGDfe4a <- rowMeans(spectra[SGDfe4], na.rm = TRUE)
+dataindex$SGDfe4s <- rowSums(spectra[SGDfe4], na.rm = TRUE)
+
+SGDfe5 <- paste0("G", 434:454)
+dataindex$SGDfe5a <- rowMeans(spectra[SGDfe5], na.rm = TRUE)
+dataindex$SGDfe5s <- rowSums(spectra[SGDfe5], na.rm = TRUE)
+
+SGDfe6 <- paste0("G", 424:444)
+dataindex$SGDfe6a <- rowMeans(spectra[SGDfe6], na.rm = TRUE)
+dataindex$SGDfe6s <- rowSums(spectra[SGDfe6], na.rm = TRUE)
+
+SGDfe7 <- paste0("G", 519:539)
+dataindex$SGDfe7a <- rowMeans(spectra[SGDfe7], na.rm = TRUE)
+dataindex$SGDfe7s <- rowSums(spectra[SGDfe7], na.rm = TRUE)
+
+SGDfe8 <- paste0("G", 640:660)
+dataindex$SGDfe8a <- rowMeans(spectra[SGDfe8], na.rm = TRUE)
+dataindex$SGDfe8s <- rowSums(spectra[SGDfe8], na.rm = TRUE)
+
+SGDfe9 <- paste0("G", 874:894)
+dataindex$SGDfe9a <- rowMeans(spectra[SGDfe9], na.rm = TRUE)
+dataindex$SGDfe9s <- rowSums(spectra[SGDfe9], na.rm = TRUE)
+
+#organic
+
+SGDorg1 <- paste0("G", 1640:1660)
+dataindex$SGDorg1a <- rowMeans(spectra[SGDorg1], na.rm = TRUE)
+dataindex$SGDorg1s <- rowSums(spectra[SGDorg1], na.rm = TRUE)
+
+SGDorg2 <- paste0("G", 1090:1110)
+dataindex$SGDorg2a <- rowMeans(spectra[SGDorg2], na.rm = TRUE)
+dataindex$SGDorg2s <- rowSums(spectra[SGDorg2], na.rm = TRUE)
+
+SGDorg3 <- paste0("G", 815:835)
+dataindex$SGDorg3a <- rowMeans(spectra[SGDorg3], na.rm = TRUE)
+dataindex$SGDorg3s <- rowSums(spectra[SGDorg3], na.rm = TRUE)
+
+SGDorg4 <- paste0("G", 2050:2070)
+dataindex$SGDorg4a <- rowMeans(spectra[SGDorg4], na.rm = TRUE)
+dataindex$SGDorg4s <- rowSums(spectra[SGDorg4], na.rm = TRUE)
+
+SGDorg5 <- paste0("G", 1490:1510)
+dataindex$SGDorg5a <- rowMeans(spectra[SGDorg5], na.rm = TRUE)
+dataindex$SGDorg5s <- rowSums(spectra[SGDorg5], na.rm = TRUE)
+
+SGDorg6 <- paste0("G", 990:1010)
+dataindex$SGDorg6a <- rowMeans(spectra[SGDorg6], na.rm = TRUE)
+dataindex$SGDorg6s <- rowSums(spectra[SGDorg6], na.rm = TRUE)
+
+SGDorg7 <- paste0("G", 741:761)
+dataindex$SGDorg7a <- rowMeans(spectra[SGDorg7], na.rm = TRUE)
+dataindex$SGDorg7s <- rowSums(spectra[SGDorg7], na.rm = TRUE)
+
+SGDorg8 <- paste0("G", 1696:1716)
+dataindex$SGDorg8a <- rowMeans(spectra[SGDorg8], na.rm = TRUE)
+dataindex$SGDorg8s <- rowSums(spectra[SGDorg8], na.rm = TRUE)
+
+SGDorg9 <- paste0("G", 1744:1764)
+dataindex$SGDorg9a <- rowMeans(spectra[SGDorg9], na.rm = TRUE)
+dataindex$SGDorg9s <- rowSums(spectra[SGDorg9], na.rm = TRUE)
+
+SGDorg10 <- paste0("G", 1128:1148)
+dataindex$SGDorg10a <- rowMeans(spectra[SGDorg10], na.rm = TRUE)
+dataindex$SGDorg10s <- rowSums(spectra[SGDorg10], na.rm = TRUE)
+
+SGDorg11 <- paste0("G", 1160:1180)
+dataindex$SGDorg11a <- rowMeans(spectra[SGDorg11], na.rm = TRUE)
+dataindex$SGDorg11s <- rowSums(spectra[SGDorg11], na.rm = TRUE)
+
+SGDorg12 <- paste0("G", 843:863)
+dataindex$SGDorg12a <- rowMeans(spectra[SGDorg12], na.rm = TRUE)
+dataindex$SGDorg12s <- rowSums(spectra[SGDorg12], na.rm = TRUE)
+
+SGDorg13 <- paste0("G", 867:887)
+dataindex$SGDorg13a <- rowMeans(spectra[SGDorg13], na.rm = TRUE)
+dataindex$SGDorg13s <- rowSums(spectra[SGDorg13], na.rm = TRUE)
+
+SGDorg14 <- paste0("G", 1920:1940)
+dataindex$SGDorg14a <- rowMeans(spectra[SGDorg14], na.rm = TRUE)
+dataindex$SGDorg14s <- rowSums(spectra[SGDorg14], na.rm = TRUE)
+
+SGDorg15 <- paste0("G", 1439:1459)
+dataindex$SGDorg15a <- rowMeans(spectra[SGDorg15], na.rm = TRUE)
+dataindex$SGDorg15s <- rowSums(spectra[SGDorg15], na.rm = TRUE)
+
+SGDorg16 <- paste0("G", 2023:2043)
+dataindex$SGDorg16a <- rowMeans(spectra[SGDorg16], na.rm = TRUE)
+dataindex$SGDorg16s <- rowSums(spectra[SGDorg16], na.rm = TRUE)
+
+SGDorg17 <- paste0("G", 1514:1534)
+dataindex$SGDorg17a <- rowMeans(spectra[SGDorg17], na.rm = TRUE)
+dataindex$SGDorg17s <- rowSums(spectra[SGDorg17], na.rm = TRUE)
+
+SGDorg18 <- paste0("G", 2265:2285)
+dataindex$SGDorg18a <- rowMeans(spectra[SGDorg18], na.rm = TRUE)
+dataindex$SGDorg18s <- rowSums(spectra[SGDorg18], na.rm = TRUE)
+
+SGDorg19 <- paste0("G", 1696:1716)
+dataindex$SGDorg19a <- rowMeans(spectra[SGDorg19], na.rm = TRUE)
+dataindex$SGDorg19s <- rowSums(spectra[SGDorg19], na.rm = TRUE)
+
+SGDorg20 <- paste0("G", 2297:2317)
+dataindex$SGDorg20a <- rowMeans(spectra[SGDorg20], na.rm = TRUE)
+dataindex$SGDorg20s <- rowSums(spectra[SGDorg20], na.rm = TRUE)
+
+SGDorg21 <- paste0("G", 1720:1740)
+dataindex$SGDorg21a <- rowMeans(spectra[SGDorg21], na.rm = TRUE)
+dataindex$SGDorg21s <- rowSums(spectra[SGDorg21], na.rm = TRUE)
+
+SGDorg22 <- paste0("G", 1951:1971)
+dataindex$SGDorg22a <- rowMeans(spectra[SGDorg22], na.rm = TRUE)
+dataindex$SGDorg22s <- rowSums(spectra[SGDorg22], na.rm = TRUE)
+
+SGDorg23 <- paste0("G", 2127:2147)
+dataindex$SGDorg23a <- rowMeans(spectra[SGDorg23], na.rm = TRUE)
+dataindex$SGDorg23s <- rowSums(spectra[SGDorg23], na.rm = TRUE)
+
+SGDorg24 <- paste0("G", 2371:2391)
+dataindex$SGDorg24a <- rowMeans(spectra[SGDorg24], na.rm = TRUE)
+dataindex$SGDorg24s <- rowSums(spectra[SGDorg24], na.rm = TRUE)
+
+#clay
+
+SGDclay1 <- paste0("G", 1385:1405)
+dataindex$SGDclay1a <- rowMeans(spectra[SGDclay1], na.rm = TRUE)
+dataindex$SGDclay1s <- rowSums(spectra[SGDclay1], na.rm = TRUE)
+
+SGDclay2 <- paste0("G", 1405:1425)
+dataindex$SGDclay2a <- rowMeans(spectra[SGDclay2], na.rm = TRUE)
+dataindex$SGDclay2s <- rowSums(spectra[SGDclay2], na.rm = TRUE)
+
+SGDclay3 <- paste0("G", 2150:2170)
+dataindex$SGDclay3a <- rowMeans(spectra[SGDclay3], na.rm = TRUE)
+dataindex$SGDclay3s <- rowSums(spectra[SGDclay3], na.rm = TRUE)
+
+SGDclay4 <- paste0("G", 2050:2070)
+dataindex$SGDclay4a <- rowMeans(spectra[SGDclay4], na.rm = TRUE)
+dataindex$SGDclay4s <- rowSums(spectra[SGDclay4], na.rm = TRUE)
+
+SGDclay5 <- paste0("G", 2198:2218)
+dataindex$SGDclay5a <- rowMeans(spectra[SGDclay5], na.rm = TRUE)
+dataindex$SGDclay5s <- rowSums(spectra[SGDclay5], na.rm = TRUE)
+
+SGDclay6 <- paste0("G", 2196:2216)
+dataindex$SGDclay6a <- rowMeans(spectra[SGDclay6], na.rm = TRUE)
+dataindex$SGDclay6s <- rowSums(spectra[SGDclay6], na.rm = TRUE)
+
+SGDclay7 <- paste0("G", 2220:2240)
+dataindex$SGDclay7a <- rowMeans(spectra[SGDclay7], na.rm = TRUE)
+dataindex$SGDclay7s <- rowSums(spectra[SGDclay7], na.rm = TRUE)
+
+SGDclay8 <- paste0("G", 2330:2350)
+dataindex$SGDclay8a <- rowMeans(spectra[SGDclay8], na.rm = TRUE)
+dataindex$SGDclay8s <- rowSums(spectra[SGDclay8], na.rm = TRUE)
+
+SGDclay9 <- paste0("G", 2440:2460)
+dataindex$SGDclay9a <- rowMeans(spectra[SGDclay9], na.rm = TRUE)
+dataindex$SGDclay9s <- rowSums(spectra[SGDclay9], na.rm = TRUE)
+
+SGDclay10 <- paste0("G", 2326:2346)
+dataindex$SGDclay10a <- rowMeans(spectra[SGDclay10], na.rm = TRUE)
+dataindex$SGDclay10s <- rowSums(spectra[SGDclay10], na.rm = TRUE)
+
+###################################################### CRR
+
+################################################
+#revisao
+#################################################
+# RAW
+
+RAWCOL1 <- paste0("X", 400:700)
+dataindex$RAWCOL1 <- 1/sum((spectra[RAWCOL1]) , na.rm = TRUE)
+
+min <- paste0("X", 400)
+max <- paste0("X", 600)
+RAWCOL2 <- 1/(spectra[max] - spectra[min])
+
+#ORG25
+RAWORG25 <- paste0("X", 2050:2200)
+dataindex$RAWORG25 <- 1/(rowMeans(spectra[RAWORG25], na.rm = TRUE))
+
+RAWR <- paste0("X", 564:580)
+dataindex$RAWR <- rowMeans(spectra[RAWR], na.rm = TRUE)
+
+RAWG <- paste0("X", 534:545)
+dataindex$RAWG <- rowMeans(spectra[RAWG], na.rm = TRUE)
+
+RAWB <- paste0("X", 420:440)
+dataindex$RAWB <- rowMeans(spectra[RAWB], na.rm = TRUE)
+
+#r <- R/(R+G+B)
+dataindex$RAWr <- dataindex$RAWR/ (dataindex$RAWR + dataindex$RAWG + dataindex$RAWB)
+#g <- G/(R+G+B)
+dataindex$RAWg <- dataindex$RAWG/ (dataindex$RAWR + dataindex$RAWG + dataindex$RAWB)
+#g <- B/(R+G+B)
+dataindex$RAWb <- dataindex$RAWB/ (dataindex$RAWR + dataindex$RAWG + dataindex$RAWB)
+
+#COL18 <- (g−r)/(g+r)
+dataindex$RAWCOL18 <- (dataindex$RAWg - dataindex$RAWr)/(dataindex$RAWg + dataindex$RAWr)
+
+#COL20 <- R−B/R+B
+dataindex$RAWCOL20 <- (dataindex$RAWR - dataindex$RAWB)/(dataindex$RAWR + dataindex$RAWB)
+
+#COL21 <- R/G
+dataindex$RAWCOL21 <- (dataindex$RAWR)/(dataindex$RAWG)
+
+#COL22 <- G−B
+dataindex$RAWCOL22 <- (dataindex$RAWG) - (dataindex$RAWB)
+
+#COL23 <- G−R
+dataindex$RAWCOL23 <- (dataindex$RAWG) - (dataindex$RAWR)
+
+#COL24 <- g−b
+dataindex$RAWCOL24 <- (dataindex$RAWg) - (dataindex$RAWb)
+
+#COL25 <- G/B
+dataindex$RAWCOL25 <- (dataindex$RAWG)/(dataindex$RAWB)
+
+#COL26 <- R2/(B×G3)
+dataindex$RAWCOL26 <- ((dataindex$RAWR)^2)/(dataindex$RAWB * (dataindex$RAWG^3))
+
+#COL27 <- (R−G)/(R+G)
+dataindex$RAWCOL27 <- (dataindex$RAWR - dataindex$RAWG)/(dataindex$RAWR + dataindex$RAWG)
+
+#COL28 <- (R−B)/(R+B)
+dataindex$RAWCOL28 <- (dataindex$RAWR - dataindex$RAWB)/(dataindex$RAWR + dataindex$RAWB)
+
+#COL29 <- sqrt(((R×R) + (G×G))/2)
+dataindex$RAWCOL29 <- sqrt((dataindex$RAWR * dataindex$RAWR) + ((dataindex$RAWG * dataindex$RAWG)/2))
+
+#COL30 <- (2×R−G−B)/(G−B)
+dataindex$RAWCOL30 <- ((2*dataindex$RAWR) - dataindex$RAWB - dataindex$RAWG)/(dataindex$RAWG - dataindex$RAWB)
+
+#NFODI <- (1 − 920)-(1 − 880)/(1 − 880)+(1 − 920))
+dataindex$RAWNFODI <- ((1-spectra$X920)-(1-spectra$X880))/((1-spectra$X880)+(1-spectra$X920))
+
+#ORG27 <- 465/665
+dataindex$RAWORG27 <- (spectra$X465) / (spectra$X665)
+
+#G5 <- 420/450
+dataindex$RAWG5 <- (spectra$X420) / (spectra$X450)
+
+#G6 <- 480/510
+dataindex$RAWG6 <- (spectra$X480) / (spectra$X510)
+
+#H6 <- 535/575
+dataindex$RAWH6 <- (spectra$X535) / (spectra$X575)
+
+#FODI <- H6/(G5 + H6)
+dataindex$RAWFODI <- (dataindex$RAWH6) / (dataindex$RAWG5 + dataindex$RAWH6)
+
+####
+#### SMO
+
+SMOCOL1 <- paste0("S", 400:700)
+dataindex$SMOCOL1 <- 1/sum((spectra[SMOCOL1]) , na.rm = TRUE)
+
+min <- paste0("S", 400)
+max <- paste0("S", 600)
+SMOCOL2 <- 1/(spectra[max] - spectra[min])
+
+#ORG25
+SMOORG25 <- paste0("S", 2050:2200)
+dataindex$SMOORG25 <- 1/(rowMeans(spectra[SMOORG25], na.rm = TRUE))
+
+SMOR <- paste0("S", 564:580)
+dataindex$SMOR <- rowMeans(spectra[SMOR], na.rm = TRUE)
+
+SMOG <- paste0("S", 534:545)
+dataindex$SMOG <- rowMeans(spectra[SMOG], na.rm = TRUE)
+
+SMOB <- paste0("S", 420:440)
+dataindex$SMOB <- rowMeans(spectra[SMOB], na.rm = TRUE)
+
+#r <- R/(R+G+B)
+dataindex$SMOr <- dataindex$SMOR/ (dataindex$SMOR + dataindex$SMOG + dataindex$SMOB)
+#g <- G/(R+G+B)
+dataindex$SMOg <- dataindex$SMOG/ (dataindex$SMOR + dataindex$SMOG + dataindex$SMOB)
+#g <- B/(R+G+B)
+dataindex$SMOb <- dataindex$SMOB/ (dataindex$SMOR + dataindex$SMOG + dataindex$SMOB)
+
+#COL18 <- (g−r)/(g+r)
+dataindex$SMOCOL18 <- (dataindex$SMOg - dataindex$SMOr)/(dataindex$SMOg + dataindex$SMOr)
+
+#COL20 <- R−B/R+B
+dataindex$SMOCOL20 <- (dataindex$SMOR - dataindex$SMOB)/(dataindex$SMOR + dataindex$SMOB)
+
+#COL21 <- R/G
+dataindex$SMOCOL21 <- (dataindex$SMOR)/(dataindex$SMOG)
+
+#COL22 <- G−B
+dataindex$SMOCOL22 <- (dataindex$SMOG) - (dataindex$SMOB)
+
+#COL23 <- G−R
+dataindex$SMOCOL23 <- (dataindex$SMOG) - (dataindex$SMOR)
+
+#COL24 <- g−b
+dataindex$SMOCOL24 <- (dataindex$SMOg) - (dataindex$SMOb)
+
+#COL25 <- G/B
+dataindex$SMOCOL25 <- (dataindex$SMOG)/(dataindex$SMOB)
+
+#COL26 <- R2/(B×G3)
+dataindex$SMOCOL26 <- ((dataindex$SMOR)^2)/(dataindex$SMOB * (dataindex$SMOG^3))
+
+#COL27 <- (R−G)/(R+G)
+dataindex$SMOCOL27 <- (dataindex$SMOR - dataindex$SMOG)/(dataindex$SMOR + dataindex$SMOG)
+
+#COL28 <- (R−B)/(R+B)
+dataindex$SMOCOL28 <- (dataindex$SMOR - dataindex$SMOB)/(dataindex$SMOR + dataindex$SMOB)
+
+#COL29 <- sqrt(((R×R) + (G×G))/2)
+dataindex$SMOCOL29 <- sqrt((dataindex$SMOR * dataindex$SMOR) + ((dataindex$SMOG * dataindex$SMOG)/2))
+
+#COL30 <- (2×R−G−B)/(G−B)
+dataindex$SMOCOL30 <- ((2*dataindex$SMOR) - dataindex$SMOB - dataindex$SMOG)/(dataindex$SMOG - dataindex$SMOB)
+
+#NFODI <- (1 − 920)-(1 − 880)/(1 − 880)+(1 − 920))
+dataindex$SMONFODI <- ((1 - spectra$S920)-(1 - spectra$S880))/((1 - spectra$S880)+(1 -spectra$S920))
+
+#ORG27 <- 465/665
+dataindex$SMOORG27 <- (spectra$S465) / (spectra$S665)
+
+#G5 <- 420/450
+dataindex$SMOG5 <- (spectra$S420) / (spectra$S450)
+
+#G6 <- 480/510
+dataindex$SMOG6 <- (spectra$S480) / (spectra$S510)
+
+#H6 <- 535/575
+dataindex$SMOH6 <- (spectra$S535) / (spectra$S575)
+
+#FODI <- H6/(G5 + H6)
+dataindex$SMOFODI <- (dataindex$SMOH6) / (dataindex$SMOG5 + dataindex$SMOH6)
+
+####
+#### SGD
+
+SGDCOL1 <- paste0("G", 400:700)
+dataindex$SGDCOL1 <- 1/sum((spectra[SGDCOL1]) , na.rm = TRUE)
+
+min <- paste0("G", 400)
+max <- paste0("G", 600)
+SGDCOL2 <- 1/(spectra[max] - spectra[min])
+
+#ORG25
+SGDORG25 <- paste0("G", 2050:2200)
+dataindex$SGDORG25 <- 1/(rowMeans(spectra[SGDORG25], na.rm = TRUE))
+
+SGDR <- paste0("G", 564:580)
+dataindex$SGDR <- rowMeans(spectra[SGDR], na.rm = TRUE)
+
+SGDG <- paste0("G", 534:545)
+dataindex$SGDG <- rowMeans(spectra[SGDG], na.rm = TRUE)
+
+SGDB <- paste0("G", 420:440)
+dataindex$SGDB <- rowMeans(spectra[SGDB], na.rm = TRUE)
+
+#r <- R/(R+G+B)
+dataindex$SGDr <- dataindex$SGDR/ (dataindex$SGDR + dataindex$SGDG + dataindex$SGDB)
+#g <- G/(R+G+B)
+dataindex$SGDg <- dataindex$SGDG/ (dataindex$SGDR + dataindex$SGDG + dataindex$SGDB)
+#g <- B/(R+G+B)
+dataindex$SGDb <- dataindex$SGDB/ (dataindex$SGDR + dataindex$SGDG + dataindex$SGDB)
+
+#COL18 <- (g−r)/(g+r)
+dataindex$SGDCOL18 <- (dataindex$SGDg - dataindex$SGDr)/(dataindex$SGDg + dataindex$SGDr)
+
+#COL20 <- R−B/R+B
+dataindex$SGDCOL20 <- (dataindex$SGDR - dataindex$SGDB)/(dataindex$SGDR + dataindex$SGDB)
+
+#COL21 <- R/G
+dataindex$SGDCOL21 <- (dataindex$SGDR)/(dataindex$SGDG)
+
+#COL22 <- G−B
+dataindex$SGDCOL22 <- (dataindex$SGDG) - (dataindex$SGDB)
+
+#COL23 <- G−R
+dataindex$SGDCOL23 <- (dataindex$SGDG) - (dataindex$SGDR)
+
+#COL24 <- g−b
+dataindex$SGDCOL24 <- (dataindex$SGDg) - (dataindex$SGDb)
+
+#COL25 <- G/B
+dataindex$SGDCOL25 <- (dataindex$SGDG)/(dataindex$SGDB)
+
+#COL26 <- R2/(B×G3)
+dataindex$SGDCOL26 <- ((dataindex$SGDR)^2)/(dataindex$SGDB * (dataindex$SGDG^3))
+
+#COL27 <- (R−G)/(R+G)
+dataindex$SGDCOL27 <- (dataindex$SGDR - dataindex$SGDG)/(dataindex$SGDR + dataindex$SGDG)
+
+#COL28 <- (R−B)/(R+B)
+dataindex$SGDCOL28 <- (dataindex$SGDR - dataindex$SGDB)/(dataindex$SGDR + dataindex$SGDB)
+
+#COL29 <- sqrt(((R×R) + (G×G))/2)
+dataindex$SGDCOL29 <- sqrt((dataindex$SGDR * dataindex$SGDR) + ((dataindex$SGDG * dataindex$SGDG)/2))
+
+#COL30 <- (2×R−G−B)/(G−B)
+dataindex$SGDCOL30 <- ((2*dataindex$SGDR) - dataindex$SGDB - dataindex$SGDG)/(dataindex$SGDG - dataindex$SGDB)
+
+#NFODI <- (1 − 920)-(1 − 880)/(1 − 880)+(1 − 920))
+dataindex$SGDNFODI <- ((1 -spectra$G920)-(1 - spectra$G880))/((1 - spectra$G880)+(1 - spectra$G920))
+
+#ORG27 <- 465/665
+dataindex$SGDORG27 <- (spectra$G465) / (spectra$G665)
+
+#G5 <- 420/450
+dataindex$SGDG5 <- (spectra$G420) / (spectra$G450)
+
+#G6 <- 480/510
+dataindex$SGDG6 <- (spectra$G480) / (spectra$G510)
+
+#H6 <- 535/575
+dataindex$SGDH6 <- (spectra$G535) / (spectra$G575)
+
+#FODI <- H6/(G5 + H6)
+dataindex$SGDFODI <- (dataindex$SGDH6) / (dataindex$SGDG5 + dataindex$SGDH6)
+
+```
+
+
+
+## Correlation index
+
+### cor
+```{r, warning= FALSE}
+#write.csv(dataindex, "results/dataindex.csv")
+dat <- read.csv("results/dataindex.csv")
+dat <- dataindex
+
+cor_fun <- function(x, y, method){
+  tmp <- cor.test(x, y, method= method)
+  cbind(r=tmp$estimate, p=tmp$p.value) }
+ 
+coscor <- t(apply(dat, 2, cor_fun, dat[, 1], "spearman"))
+
+#write.csv(coscor, "results/CosCorr.csv")
+
+claycor <- t(apply(dat, 2, cor_fun, dat[, 2], "spearman"))
+
+#write.csv(claycor, "results/ClayCorr.csv")
+
+#corrgram::corrgram(cor(dat))
+```
+
+
+### Figure 1
+
+Empirical probability density of carbon (A) and clay (B) content in soil samples and the theoretical normal probability density function (dashed line).
+Key characteristics of the soil samples and its site, such as land use/land cover (C), and parental material (D).
+
+```{r, eval = FALSE}
+
+p1 <- histogram(
+  ~ soc, data, 
+  xlab = expression('COS, [%]'), col = 'lightgray', type = "percent", 
+  panel = function (...) {
+    panel.grid(v = -1, h = -1)
+    panel.histogram(...)
+    lattice::panel.rug(...)
+  },
+  page = function (n) {
+    grid::grid.text(label = "A)", x = grid::unit(0.04, "npc"), y = grid::unit(0.95, "npc"))
+  })# + l
+
+p2 <- histogram(
+  ~ clay, data, 
+  xlab = expression('Argila,  [%]'), col = 'lightgray', type = "percent", 
+  panel = function (...) {
+    panel.grid(v = -1, h = -1)
+    panel.histogram(...)
+    lattice::panel.rug(...)
+  },
+  page = function (n) {
+    grid::grid.text(label = "B)", x = grid::unit(0.04, "npc"), y = grid::unit(0.95, "npc"))
+  })# + l
+
+
+p3 <- barchart(
+  data$geology, xlab = 'Material de origem', ylab = 'Percent of total', horizontal = FALSE, 
+  col = 'lightgray',
+  panel = function (...) {
+    lattice::panel.grid(h = -1, v = 0)
+    lattice::panel.barchart(...)
+  },
+  page = function (n) {
+    grid::grid.text(label = "E)", x = grid::unit(0.04, "npc"), y = grid::unit(0.95, "npc"))
+  })
+
+p4 <- barchart(
+  data$land.use, xlab = 'Uso/cobertura da terra', ylab = 'Percent of total', horizontal = FALSE, 
+  col = 'lightgray',
+  panel = function (...) {
+    lattice::panel.grid(h = -1, v = 0)
+    lattice::panel.barchart(...)
+  },
+  page = function (n) {
+    grid::grid.text(label = "F)", x = grid::unit(0.04, "npc"), y = grid::unit(0.95, "npc"))
+  })
+
+png("results/hist-soil-samples.png")
+gridExtra::grid.arrange(p1, p2, p3, p4,  ncol = 2)
+dev.off()
+```
+
+### Figure 2
+
+Correlation between soil organic carbon content (DRY COMBUSTION) in soil samples and spectra Vis-NIR-SWIR (mean = solid line, sd = grey). Preprocessing SMO (a), SGD (b), and CRR (c).
+```{r}
+#MUDAR PRE PROCESSAMENTO
+
+#####################################################
+#########################cálculo ds curvas médias e sd 
+
+####################
+geral.spectra <- RAW
+
+mean.geral <- apply(geral.spectra, 2 , FUN = mean) ##### mean 
+sd.geral   <- apply(geral.spectra, 2 , FUN = sd) ##### sd
+pos.sd.geral        <- -sd.geral ##### pos. and neg. std dev
+
+pos        <- (mean.geral + pos.sd.geral)
+neg        <- (mean.geral - pos.sd.geral)
+
+
+CR.pos.sd.table       <- rbind(mean.geral, pos, neg )
+
+CR.class.mean.pos.neg           <- (data.frame(t(CR.pos.sd.table)))
+colnames(CR.class.mean.pos.neg) <- c("Mean","Pos", "Neg")
+row.names(CR.class.mean.pos.neg)<- NULL
+
+CR.class.mean.pos.neg$band      <- seq(355,2500)
+
+geralRAW <- CR.class.mean.pos.neg
+
+####################
+geral.spectra <- SMO
+
+mean.geral <- apply(geral.spectra, 2 , FUN = mean) ##### mean 
+sd.geral   <- apply(geral.spectra, 2 , FUN = sd) ##### sd
+pos.sd.geral        <- -sd.geral ##### pos. and neg. std dev
+
+pos        <- (mean.geral + pos.sd.geral)
+neg        <- (mean.geral - pos.sd.geral)
+
+
+CR.pos.sd.table       <- rbind(mean.geral, pos, neg )
+
+CR.class.mean.pos.neg           <- (data.frame(t(CR.pos.sd.table)))
+colnames(CR.class.mean.pos.neg) <- c("Mean","Pos", "Neg")
+row.names(CR.class.mean.pos.neg)<- NULL
+
+CR.class.mean.pos.neg$band      <- seq(359,2496) #SMO
+
+geralSMO <- CR.class.mean.pos.neg
+
+#############
+geral.spectra <- SGD
+
+mean.geral <- apply(geral.spectra, 2 , FUN = mean) ##### mean 
+sd.geral   <- apply(geral.spectra, 2 , FUN = sd) ##### sd
+pos.sd.geral        <- -sd.geral ##### pos. and neg. std dev
+
+pos        <- (mean.geral + pos.sd.geral)
+neg        <- (mean.geral - pos.sd.geral)
+
+
+CR.pos.sd.table       <- rbind(mean.geral, pos, neg )
+
+CR.class.mean.pos.neg           <- (data.frame(t(CR.pos.sd.table)))
+colnames(CR.class.mean.pos.neg) <- c("Mean","Pos", "Neg")
+row.names(CR.class.mean.pos.neg)<- NULL
+
+CR.class.mean.pos.neg$band      <- seq(359,2494) #SMO
+
+geralSGD <- CR.class.mean.pos.neg
+
+
+#####################################################
+#########################SPECTRA CURVE
+library(ggplot2)
+library(grid)
+library(gridExtra)
+
+s1 <- ggplot2::ggplot(data = geralRAW) +
+  geom_ribbon(aes(ymin = Neg, ymax = Pos, x = band), alpha = 0.4, fill="gray") +
+  geom_line(aes(x = band, y = Mean), color="red", size = 1, lty =1) +
+  #scale_y_continuous("Reflectance", limits = c(0, 0.35)) +
+  #scale_x_continuous("Wavelength (nm)", limits = c(355,2500)) +
+  theme_bw() +
+   facet_grid(rows = vars("RAW")) +
+    theme(strip.text.y = element_text(size=12, color="black",
+                                      face="bold"))
+
+s2 <- ggplot2::ggplot(data = geralSMO) +
+  geom_ribbon(aes(ymin = Neg, ymax = Pos, x = band), alpha = 0.4, fill="gray") +
+  geom_line(aes(x = band, y = Mean), color="red", size = 1, lty =1) +
+  #scale_y_continuous("Reflectance", limits = c(0, 0.35)) +
+  #scale_x_continuous("Wavelength (nm)", limits = c(355,2500)) +
+  theme_bw() +
+   facet_grid(rows = vars("SMO")) +
+    theme(strip.text.y = element_text(size=12, color="black",
+                                      face="bold"))
+
+s3 <- ggplot2::ggplot(data = geralSGD) +
+  geom_ribbon(aes(ymin = Neg, ymax = Pos, x = band), alpha = 0.4, fill="gray") +
+  geom_line(aes(x = band, y = Mean), color="red", size = 1, lty =1) +
+  #scale_y_continuous("Reflectance", limits = c(-0.001, 0.0015)) +
+  #scale_x_continuous("Wavelength (nm)", limits = c(355,2500)) +
+  theme_bw() +
+   facet_grid(rows = vars("SGD")) +
+    theme(strip.text.y = element_text(size=12, color="black",
+                                      face="bold"))
+
+
+#####################################################
+#########################CORRELATION
+###
+matrix <- cbind(soil, RAW)
+cormat <- round(cor(matrix),2)
+melted_cormat <- reshape2::melt(cormat)
+melted_cormat_RAW <-  melted_cormat %>% filter(Var1 == "soc")
+melted_cormat_RAW <-  melted_cormat_RAW[-c(1:3),]
+colnames(melted_cormat_RAW)[3] <- "Corr"
+
+
+matrix <- cbind(soil, SMO)
+cormat <- round(cor(matrix),2)
+melted_cormat <- reshape2::melt(cormat)
+melted_cormat_SMO <-  melted_cormat %>% filter(Var1 == "soc")
+melted_cormat_SMO <-  melted_cormat_SMO[-c(1:3),]
+colnames(melted_cormat_SMO)[3] <- "Corr"
+
+####
+matrix <- cbind(soil, SGD)
+cormat <- round(cor(matrix),2)
+melted_cormat <- reshape2::melt(cormat)
+melted_cormat_SGD <-  melted_cormat %>% filter(Var1 == "soc")
+melted_cormat_SGD = melted_cormat_SGD[-c(1:3),]
+colnames(melted_cormat_SGD)[3] <- "Corr"
+
+################################ argila
+
+matrix <- cbind(soil, RAW)
+cormat <- round(cor(matrix),2)
+melted_cormat <- reshape2::melt(cormat)
+melted_cormat_RAWc <-  melted_cormat %>% filter(Var1 == "clay")
+melted_cormat_RAWc <-  melted_cormat_RAWc[-c(1:3),]
+colnames(melted_cormat_RAWc)[3] <- "Corr"
+
+
+matrix <- cbind(soil, SMO)
+cormat <- round(cor(matrix),2)
+melted_cormat <- reshape2::melt(cormat)
+melted_cormat_SMOc <-  melted_cormat %>% filter(Var1 == "clay")
+melted_cormat_SMOc <-  melted_cormat_SMOc[-c(1:3),]
+colnames(melted_cormat_SMOc)[3] <- "Corr"
+
+####
+matrix <- cbind(soil, SGD)
+cormat <- round(cor(matrix),2)
+melted_cormat <- reshape2::melt(cormat)
+melted_cormat_SGDc <-  melted_cormat %>% filter(Var1 == "clay")
+melted_cormat_SGDc = melted_cormat_SGDc[-c(1:3),]
+colnames(melted_cormat_SGDc)[3] <- "Corr"
+
+#range(melted_cormat_SMO$value)
+#range(melted_cormat_SGD$value)
+#range(melted_cormat_CRR$value)
+
+#specCorr <- rbind(melted_cormat_SMO, melted_cormat_SGD, melted_cormat_CRR)
+#write.csv(specCorr, "../result/specCorr.csv")
+
+#####################################################
+#########################PLOT
+
+## pegar legenda
+#p0 <-  ggplot(data = melted_cormat_RAW, aes(x=Var1, y=Var2, fill=Corr)) + 
+#  geom_tile() +
+#  scale_fill_gradient2(low="navy", mid="white", high="red", 
+ #                      midpoint=0, limits=range(c(-1:1))) +
+#  coord_flip()
+#legend <- cowplot::get_legend(p0)
+#####
+
+p1 <-  ggplot(data = melted_cormat_RAW, aes(x=Var1, y=Var2, fill=Corr)) + 
+  geom_tile() +
+  xlab(" ") + ylab(" ") +
+  #theme(legend.position = "none") +
+  scale_fill_gradient2(low="navy", mid="white", high="red", 
+                       midpoint=0, limits=range(c(-1:1))) +
+  coord_flip()
+
+p2 <-  ggplot(data = melted_cormat_SMO, aes(x=Var1, y=Var2, fill= Corr)) + 
+  geom_tile() +
+  xlab(" ") + ylab(" ") +
+  #theme(legend.position = "none") +
+  scale_fill_gradient2(low="navy", mid="white", high="red", 
+                       midpoint=0, limits=range(c(-1:1))) +
+  coord_flip()
+
+p3 <-  ggplot(data = melted_cormat_SGD, aes(x=Var1, y=Var2, fill=Corr)) + 
+  geom_tile() +
+  xlab(" ") + ylab(" ") +
+  #theme(legend.position = "none") +
+  scale_fill_gradient2(low="navy", mid="white", high="red", 
+                       midpoint=0, limits=range(c(-1:1))) +
+  coord_flip()
+
+p4 <-  ggplot(data = melted_cormat_RAWc, aes(x=Var1, y=Var2, fill=Corr)) + 
+  geom_tile() +
+  xlab(" ") + ylab(" ") +
+  #theme(legend.position = "none") +
+  scale_fill_gradient2(low="navy", mid="white", high="red", 
+                       midpoint=0, limits=range(c(-1:1))) +
+  coord_flip()
+
+p5 <-  ggplot(data = melted_cormat_SMOc, aes(x=Var1, y=Var2, fill= Corr)) + 
+  geom_tile() +
+  xlab(" ") + ylab(" ") +
+  #theme(legend.position = "none") +
+  scale_fill_gradient2(low="navy", mid="white", high="red", 
+                       midpoint=0, limits=range(c(-1:1))) +
+  coord_flip()
+
+p6 <-  ggplot(data = melted_cormat_SGDc, aes(x=Var1, y=Var2, fill=Corr)) + 
+  geom_tile() +
+  xlab(" ") + ylab(" ") +
+  #theme(legend.position = "none") +
+  scale_fill_gradient2(low="navy", mid="white", high="red", 
+                       midpoint=0, limits=range(c(-1:1))) +
+  coord_flip()
+
+
+#ggpubr::ggarrange(s1, p1, s2, p2, s3, p3, ncol=1, nrow=6, common.legend = TRUE, legend="bottom")
+
+
+png("results/Spectra_corr.png")
+ggpubr::ggarrange(s1, p1, p4,  ncol=1, nrow=3)
+dev.off()
+
+png("results/Spectra_corr_CRR.png")
+ggpubr::ggarrange(s2, p2, p5,  ncol=1, nrow=3)
+dev.off()
+
+png("results/Spectra_corr_SMO.png")
+ggpubr::ggarrange(s3, p3, p6,  ncol=1, nrow=3)
+dev.off()
+
+png("results/Spectra_corr_SGD.svg")
+ggpubr::ggarrange(s1, p1, p4, s2, p2, p5, s3, p3, p6,  ncol=1, nrow=9)
+dev.off()
+
+```
+
+
+
+## Model formulation
+
+```{r}
+#dat <- as.data.frame(dataindex)
+#write.csv(dat, "SLL_index.csv")
+
+dat <- read.csv("SLL_index.csv", sep = ";", header = TRUE, stringsAsFactors=FALSE)
+dat <- dat[-c(1), ]
+dat$soc <- as.numeric(dat$soc)
+dat <- na.omit(dat)
+
+
+#dat <- cbind(soil, RAW)
+
+
+# Remover covariaveis com na
+    dat <- dat[, colSums(is.na(dat)) == 0] %>% 
+      na.omit() %>% 
+      na.exclude() %>% 
+      drop_na()
+    
+    # Remover covari?veis com vari?ncia pr?xima a 0
+    dat <- dat %>% dplyr::select(-one_of(nearZeroVar(dat, names = T)))  
+    
+```
+
+
+```{r}
+vam = createDataPartition(dat$soc, p = 0.70, list = FALSE)
+```
+
+
+#PLS
+```{r}
+library(Metrics)
+library(beepr)
+library(caret)
+           
+fm <-  as.formula(paste("soc ~", paste(names(dat)[c(seq(4,length(dat)))], collapse = "+")))
+
+memory.limit (9999999999)
+
+tictoc::tic()
+#vam = createDataPartition(dat$soc, p = 0.70, list = FALSE)
+train <- dat[vam, ]
+val <- dat[-vam, ]
+
+#CONTROL
+control <- trainControl(method = "cv", number = 10)
+grid <- expand.grid(.ncomp = seq(1, 20, 1))
+
+
+fit_pls <- train(fm, data = train,
+                 method = 'pls',
+                 trControl = control,
+                 tuneGrid = grid,
+                 importance = F,
+                 na.action = na.omit)
+
+fit_pls <- train(fm, data = train,
+                 method = 'pls',
+                 .comp = fit_pls$bestTune$ncomp,
+                 importance = F,
+                 na.action = na.omit)
+
+
+
+tresult <- predict(fit_pls, train)
+tresult <- data.frame(train$soc, Predicted=tresult)
+
+rmse(train$soc, tresult$Predicted)
+cor(train$soc, tresult$Predicted)^2
+bias(train$soc, tresult$Predicted)
+mae(train$soc, tresult$Predicted) #Mean Absolute Error
+mdae(train$soc, tresult$Predicted) #Median Absolute Error
+
+tmp <- cbind(train$id, train$soc, tresult$Predicted)
+train_pred <- rbind(train_pred, tmp)
+
+#val
+
+vresult <- predict(fit_pls, val)
+vresult <- data.frame(val$soc, Predicted=vresult)
+
+rmse(val$soc, vresult$Predicted)
+cor(val$soc, vresult$Predicted)^2
+bias(val$soc, vresult$Predicted)
+mae(val$soc, vresult$Predicted) #Mean Absolute Error
+mdae(val$soc, vresult$Predicted) #Median Absolute Error
+}
+tictoc::toc()
+
+
+write.csv(importance, "results/pls_INDEX_importance.csv")
+write.csv(train_pred, "results/pls_INDEX_train_pred.csv")
+
+
+beep()
+```
+
+#PLSloop
+```{r}
+library(Metrics)
+library(beepr)
+library(caret)
+
+training <- data.frame(rmse=numeric(), r2=numeric(), bias = numeric(), mae = numeric(), mdae = numeric(), mtry = numeric())
+validation <- data.frame(rmse=numeric(), r2=numeric(), bias = numeric(), mae = numeric(), mdae = numeric())
+#importance <- data.frame(names(spectra))
+train_pred <- data.frame()
+           
+fm <-  as.formula(paste("soc ~", paste(names(dat)[c(seq(4,length(dat)))], collapse = "+")))
+
+memory.limit (9999999999)
+
+tictoc::tic()
+vam = createDataPartition(dat$soc, p = 0.70, list = FALSE)
+train <- dat[vam, ]
+val <- dat[-vam, ]
+
+#CONTROL
+control <- trainControl(method = "cv", number = 10)
+grid <- expand.grid(.ncomp = seq(1, 20, 1))
+
+
+fit_pls <- train(fm, data = train,
+                 method = 'pls',
+                 trControl = control,
+                 tuneGrid = grid,
+                 importance = F,
+                 na.action = na.omit)
+
+fit_pls <- train(fm, data = train,
+                 method = 'pls',
+                 .comp = fit_pls$bestTune$ncomp,
+                 importance = F,
+                 na.action = na.omit)
+
+
+
+tresult <- predict(fit_pls, train)
+tresult <- data.frame(train$soc, Predicted=tresult)
+
+rmse(train$soc, tresult$Predicted)
+cor(train$soc, tresult$Predicted)^2
+bias(train$soc, tresult$Predicted)
+mae(train$soc, tresult$Predicted) #Mean Absolute Error
+mdae(train$soc, tresult$Predicted) #Median Absolute Error
+
+tmp <- cbind(train$id, train$soc, tresult$Predicted)
+train_pred <- rbind(train_pred, tmp)
+
+#val
+
+vresult <- predict(fit_pls, val)
+vresult <- data.frame(val$soc, Predicted=vresult)
+
+rmse(val$soc, vresult$Predicted)
+cor(val$soc, vresult$Predicted)^2
+bias(val$soc, vresult$Predicted)
+mae(val$soc, vresult$Predicted) #Mean Absolute Error
+mdae(val$soc, vresult$Predicted) #Median Absolute Error
+}
+tictoc::toc()
+
+
+write.csv(importance, "results/pls_INDEX_importance.csv")
+write.csv(train_pred, "results/pls_INDEX_train_pred.csv")
+
+
+beep()
+```
