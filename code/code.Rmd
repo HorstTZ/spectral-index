@@ -651,7 +651,6 @@ write.csv(eval, "../results/model8_eval.csv")
 
 # Figures
 
-### Figure 1
 
 Empirical probability density of carbon (A) and clay (B) content in soil samples and the theoretical normal probability density function (dashed line).
 Key characteristics of the soil samples and its site, such as land use/land cover (C), and parental material (D).
@@ -746,8 +745,6 @@ claycor <- t(apply(dat, 2, cor_fun, dat[, 3], "spearman"))
 #write.csv(claycor, "../results/ClayCorr_index.csv")
 ```
 
-
-### Figure 2
 
 Correlation between soil organic carbon content and clay content in soil samples and spectra Vis-NIR-SWIR (mean = solid line, sd = grey).
 ```{r}
