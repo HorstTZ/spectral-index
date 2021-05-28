@@ -150,6 +150,7 @@ fit_pls <- train(model1, data = train,
                  na.action = na.omit)
 
 ncomp <- fit_pls$bestTune$ncomp
+importance <- varImp(fit_pls)$importance
 
 tresult <- predict(fit_pls, train)
 tresult <- data.frame(train$soc, Predicted=tresult)
@@ -177,8 +178,6 @@ time <- tictoc::toc()
 seconds <- time$toc
 
 eval <- rbind(seconds, ncomp, rmse, r2, bias, mae, mdae, rmsev, r2v, biasv, maev, mdaev)
-
-
 
 
 write.csv(importance, "../results/model1_importance.csv")
@@ -217,6 +216,7 @@ fit_pls <- train(model2, data = train,
                  na.action = na.omit)
 
 ncomp <- fit_pls$bestTune$ncomp
+importance <- varImp(fit_pls)$importance
 
 tresult <- predict(fit_pls, train)
 tresult <- data.frame(train$soc, Predicted=tresult)
@@ -281,6 +281,7 @@ fit_pls <- train(model3, data = train,
                  na.action = na.omit)
 
 ncomp <- fit_pls$bestTune$ncomp
+importance <- varImp(fit_pls)$importance
 
 tresult <- predict(fit_pls, train)
 tresult <- data.frame(train$soc, Predicted=tresult)
@@ -348,6 +349,7 @@ fit_pls <- train(model3, data = train,
                  na.action = na.omit)
 
 ncomp <- fit_pls$bestTune$ncomp
+importance <- varImp(fit_pls)$importance
 
 tresult <- predict(fit_pls, train)
 tresult <- data.frame(train$soc, Predicted=tresult)
@@ -413,6 +415,7 @@ fit_pls <- train(model5, data = train,
                  na.action = na.omit)
 
 ncomp <- fit_pls$bestTune$ncomp
+importance <- varImp(fit_pls)$importance
 
 tresult <- predict(fit_pls, train)
 tresult <- data.frame(train$clay, Predicted=tresult)
@@ -480,6 +483,7 @@ fit_pls <- train(model6, data = train,
                  na.action = na.omit)
 
 ncomp <- fit_pls$bestTune$ncomp
+importance <- varImp(fit_pls)$importance
 
 tresult <- predict(fit_pls, train)
 tresult <- data.frame(train$clay, Predicted=tresult)
@@ -545,6 +549,7 @@ fit_pls <- train(model7, data = train,
                  na.action = na.omit)
 
 ncomp <- fit_pls$bestTune$ncomp
+importance <- varImp(fit_pls)$importance
 
 tresult <- predict(fit_pls, train)
 tresult <- data.frame(train$clay, Predicted=tresult)
@@ -612,6 +617,7 @@ fit_pls <- train(model8, data = train,
                  na.action = na.omit)
 
 ncomp <- fit_pls$bestTune$ncomp
+importance <- varImp(fit_pls)$importance
 
 tresult <- predict(fit_pls, train)
 tresult <- data.frame(train$clay, Predicted=tresult)
